@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+:root {
+  --font-body: 'Atkinson Hyperlegible Next', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Neo-Brutalist Retro Palette */
+  --bg-canvas: #FAF8F5;
+  --color-mustard: #FFC567;
+  --color-pink: #FB7DA8;
+  --color-coral: #FD5A46;
+  --color-violet: #552CB7;
+  --color-emerald: #00995E;
+  --color-blue: #058CD7;
+  --color-black: #000000;
+  --color-border: #18181B;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  background-color: transparent;
+  color: var(--color-black);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide scrollbars everywhere to guarantee strictly single-viewport fit */
+::-webkit-scrollbar {
+  display: none;
+  width: 0px;
+  height: 0px;
+}
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-mono-ipa {
+  font-family: var(--font-mono);
+}
+
+/* Neo-Brutalism Hard Shadow Utility Classes */
+.nb-card {
+  background-color: #FFFFFF;
+  border: 2.5px solid #000000;
+  box-shadow: 5px 5px 0px 0px #000000;
+  border-radius: 1rem;
+}
+
+.nb-card-mustard {
+  background-color: #FFC567;
+  border: 2.5px solid #000000;
+  box-shadow: 5px 5px 0px 0px #000000;
+  border-radius: 1rem;
+}
+
+.nb-card-pink {
+  background-color: #FB7DA8;
+  border: 2.5px solid #000000;
+  box-shadow: 5px 5px 0px 0px #000000;
+  border-radius: 1rem;
+}
+
+.nb-card-blue {
+  background-color: #058CD7;
+  border: 2.5px solid #000000;
+  box-shadow: 5px 5px 0px 0px #000000;
+  border-radius: 1rem;
+}
+
+.nb-card-emerald {
+  background-color: #00995E;
+  border: 2.5px solid #000000;
+  box-shadow: 5px 5px 0px 0px #000000;
+  border-radius: 1rem;
+}
+
+/* Neo-Brutalist Mechanical Switch Buttons */
+.nb-btn {
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0px 0px #000000;
+  border-radius: 0.75rem;
+  font-weight: 800;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+  cursor: pointer;
+}
+
+.nb-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0px 0px #000000;
+}
+
+.nb-btn-coral {
+  background-color: #FD5A46;
+  color: #FFFFFF;
+}
+
+.nb-btn-coral:hover {
+  background-color: #ff6e5b;
+}
+
+.nb-btn-mustard {
+  background-color: #FFC567;
+  color: #000000;
+}
+
+.nb-btn-mustard:hover {
+  background-color: #ffd07f;
+}
+
+.nb-btn-blue {
+  background-color: #058CD7;
+  color: #FFFFFF;
+}
+
+.nb-btn-blue:hover {
+  background-color: #1fa0ea;
+}
+
+.nb-btn-violet {
+  background-color: #552CB7;
+  color: #FFFFFF;
+}
+
+.nb-btn-violet:hover {
+  background-color: #6435d4;
+}
+
+/* High contrast WCAG AAA focus-visible outline */
+*:focus-visible {
+  outline: 3px solid #FD5A46;
+  outline-offset: 2px;
+}
