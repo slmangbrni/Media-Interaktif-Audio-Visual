@@ -29,6 +29,19 @@ const getAudioPath = (wordObj) => {
 };
 
 /**
+ * Resolves .mp4 video path cleanly for all 20 vocabulary items
+ */
+const getVideoPath = (wordObj) => {
+  if (!wordObj) return '';
+  if (wordObj.videoUrl) return wordObj.videoUrl;
+  if (wordObj.videoSrc && wordObj.videoSrc.startsWith('/videos_vocab/')) return wordObj.videoSrc;
+  const rawWord = (wordObj.word || '').toLowerCase().trim();
+  const cleanName = rawWord.replace(/\s+/g, '');
+  if (cleanName === 'nametag') return '/videos_vocab/nametag.mp4';
+  return `/videos_vocab/${cleanName}.mp4`;
+};
+
+/**
  * BentoGrid Component (2-Column Side-by-Side Studio Edition)
  * Strictly fitted within single-canvas h-[100dvh] viewport height.
  * 
@@ -47,6 +60,7 @@ export default function BentoGrid({
   const [timecode, setTimecode] = useState("00:00 / 00:03");
   const [activeLipShape, setActiveLipShape] = useState(currentWord.shape || 'bilabial');
   const [waveSeed, setWaveSeed] = useState(0);
+  const [videoError, setVideoError] = useState(false);
 
   // Single Audio & Video element runtime references
   const videoRef = useRef(null);
@@ -56,8 +70,29 @@ export default function BentoGrid({
 
   useEffect(() => {
     setActiveLipShape(currentWord.shape || 'bilabial');
+    setVideoError(false);
     stopPlayback();
     setTimecode("00:00 / 00:03");
+
+    const vSrc = getVideoPath(currentWord);
+    const aSrc = getAudioPath(currentWord);
+
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+        videoRef.current.src = vSrc;
+        videoRef.current.load();
+      } catch (e) {}
+    }
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = aSrc;
+        audioRef.current.load();
+      } catch (e) {}
+    }
   }, [currentWord]);
 
   useEffect(() => {
@@ -95,6 +130,37 @@ export default function BentoGrid({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, wordsInTreatment, isPlaying, playbackSpeed]);
 
+  const handleVideoTimeUpdate = () => {
+    if (videoRef.current) {
+      const cur = videoRef.current.currentTime || 0;
+      const dur = videoRef.current.duration || (playbackSpeed <= 0.2 ? 6 : 3);
+      const curSec = Math.floor(cur);
+      const totalSec = Math.ceil(dur);
+      const formatTime = (s) => (s < 10 ? `0${s}` : `${s}`);
+      setTimecode(`00:${formatTime(curSec)} / 00:${formatTime(totalSec)}`);
+    }
+
+    if (!videoRef.current || !audioRef.current || audioRef.current.ended) return;
+    const drift = Math.abs(videoRef.current.currentTime - audioRef.current.currentTime);
+    // If audio drifts by more than 120ms, snap it back to match video
+    if (drift > 0.12) {
+      audioRef.current.currentTime = videoRef.current.currentTime;
+    }
+  };
+
+  const handleAudioTimeUpdate = () => {
+    if (videoError || !videoRef.current) {
+      if (audioRef.current) {
+        const cur = audioRef.current.currentTime || 0;
+        const dur = audioRef.current.duration || 3;
+        const curSec = Math.floor(cur);
+        const totalSec = Math.ceil(dur);
+        const formatTime = (s) => (s < 10 ? `0${s}` : `${s}`);
+        setTimecode(`00:${formatTime(curSec)} / 00:${formatTime(totalSec)}`);
+      }
+    }
+  };
+
   const stopPlayback = () => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -126,9 +192,9 @@ export default function BentoGrid({
   };
 
   /**
-   * Real Audio Playback Method:
-   * Plays authentic .m4a audio file with safe Chromium playbackRate (0.5 under the hood for 0.2x UI mode)
-   * Falls back gracefully to Web Speech synthesis only if .m4a fails or is missing.
+   * Synchronized Audio-Video Playback:
+   * Video acts as the Master Clock for completion.
+   * Both share identical playbackRate (0.5x in slow practice mode for audible playback, 1.0x in normal).
    */
   const handlePlay = (opts = {}) => {
     let speed = playbackSpeed;
@@ -165,93 +231,65 @@ export default function BentoGrid({
       waveIntervalRef.current = null;
     }
 
-    // 1. Play video if video element is active
-    if (videoRef.current) {
-      try {
-        videoRef.current.playbackRate = uiSpeed;
-        if (fromStart) videoRef.current.currentTime = 0;
-        videoRef.current.play().catch(() => {});
-      } catch (e) {}
+    // 2. Lock Playback Speeds 1:1 (Identical Tempo)
+    // 0.5x is the lowest audible Chromium HTML5 rate for slow practice mode
+    const activeRate = isSlowMode ? 0.5 : 1.0;
+
+    // 3. Precision Start: Reset both media timestamps to zero simultaneously
+    const videoPath = getVideoPath(currentWord);
+    if (videoRef.current && videoPath) {
+      const fullVPath = videoPath.startsWith('http') ? videoPath : window.location.origin + videoPath;
+      if (videoRef.current.src !== fullVPath && !videoRef.current.src.endsWith(videoPath)) {
+        videoRef.current.src = videoPath;
+      }
+      videoRef.current.currentTime = 0;
+      videoRef.current.playbackRate = activeRate;
     }
 
-    // 2. Play authentic .m4a audio file
     const audioPath = getAudioPath(currentWord);
-    // Standard Chromium browsers throw NotSupportedError or mute audio if playbackRate < 0.5.
-    // Use 0.5 under the hood so Chromium doesn't mute the 0.2x UI mode.
-    const targetRate = isSlowMode ? 0.5 : 1.0;
+    if (audioRef.current && audioPath) {
+      const fullPath = audioPath.startsWith('http') ? audioPath : window.location.origin + audioPath;
+      if (audioRef.current.src !== fullPath && !audioRef.current.src.endsWith(audioPath)) {
+        audioRef.current.src = audioPath;
+      }
+
+      audioRef.current.currentTime = 0;
+      audioRef.current.preservesPitch = true;
+      audioRef.current.mozPreservesPitch = true;
+      audioRef.current.webkitPreservesPitch = true;
+      audioRef.current.playbackRate = activeRate;
+    }
 
     setIsPlaying(true);
 
-    if (audioRef.current && audioPath) {
-      try {
-        audioRef.current.pause();
-
-        const fullPath = audioPath.startsWith('http') ? audioPath : window.location.origin + audioPath;
-        if (audioRef.current.src !== fullPath && !audioRef.current.src.endsWith(audioPath)) {
-          audioRef.current.src = audioPath;
-        }
-
-        if (fromStart) {
-          audioRef.current.currentTime = 0;
-        }
-
-        audioRef.current.preservesPitch = true;
-        audioRef.current.mozPreservesPitch = true;
-        audioRef.current.webkitPreservesPitch = true;
-        audioRef.current.playbackRate = targetRate;
-
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((err) => {
-            console.warn(`[BentoGrid] Audio .play() failed for "${audioPath}":`, err);
-            speakWord(currentWord?.word || '', {
-              speed: targetRate,
-              lang: 'en-US',
-              onEnd: () => stopPlayback(),
-            });
-          });
-        }
-      } catch (err) {
-        console.warn(`[BentoGrid] Audio execution error:`, err);
+    // Play both promises concurrently
+    Promise.all([
+      videoRef.current && !videoError ? videoRef.current.play() : Promise.resolve(),
+      audioRef.current && audioPath ? audioRef.current.play() : Promise.resolve()
+    ]).catch((err) => {
+      console.warn("[BentoGrid] Concurrent media playback:", err);
+      if (!audioRef.current || videoError) {
         speakWord(currentWord?.word || '', {
-          speed: targetRate,
+          speed: activeRate,
           lang: 'en-US',
-          onEnd: () => stopPlayback(),
+          onEnd: () => {
+            if (videoError || !videoRef.current) stopPlayback();
+          },
         });
       }
-    } else {
-      speakWord(currentWord?.word || '', {
-        speed: targetRate,
-        lang: 'en-US',
-        onEnd: () => stopPlayback(),
-      });
-    }
+    });
 
-    // 3. Drive dynamic waveform animation
+    // Drive dynamic waveform animation while playing
     waveIntervalRef.current = setInterval(() => {
       setWaveSeed((prev) => (prev + 1) % 100);
     }, 120);
-
-    // 4. Drive timecode ticker
-    const totalSec = Math.max(2, Math.round(3 / targetRate));
-    let elapsed = 0;
-    setTimecode(`00:00 / 00:0${totalSec}`);
-
-    const intervalMs = 1000 / targetRate;
-    timerRef.current = setInterval(() => {
-      elapsed++;
-      setTimecode(`00:0${Math.min(elapsed, totalSec)} / 00:0${totalSec}`);
-      if (elapsed >= totalSec) {
-        stopPlayback();
-      }
-    }, intervalMs);
   };
 
   const togglePlayPause = () => {
     if (isPlaying) {
       stopPlayback();
     } else {
-      handlePlay({ fromStart: false });
+      handlePlay({ fromStart: true });
     }
   };
 
@@ -393,105 +431,103 @@ export default function BentoGrid({
             {/* Dedicated HTML5 Audio Element for authentic .m4a audio playback */}
             <audio
               ref={audioRef}
+              src={getAudioPath(currentWord)}
               preload="auto"
-              onEnded={() => stopPlayback()}
+              onTimeUpdate={handleAudioTimeUpdate}
+              onEnded={() => {
+                // If video is errored or missing, audio completes playback
+                if (videoError || !videoRef.current) {
+                  stopPlayback();
+                }
+                // When video is playing, do NOT call setIsPlaying(false).
+                // Audio stays silent while the video smoothly finishes follow-through lip gestures.
+              }}
               onError={(e) => {
                 console.warn(`[BentoGrid] Audio element error for ${currentWord?.word}:`, e);
                 if (audioRef.current && audioRef.current.src.includes('nametag.m4a')) {
                   audioRef.current.src = '/audio_vocab/name_tag.m4a';
                   audioRef.current.play().catch(() => {
                     speakWord(currentWord?.word || '', {
-                      speed: playbackSpeed === 0.2 ? 0.5 : 1.0,
+                      speed: playbackSpeed <= 0.2 ? 0.5 : 1.0,
                       lang: 'en-US',
-                      onEnd: () => stopPlayback(),
+                      onEnd: () => {
+                        if (videoError || !videoRef.current) stopPlayback();
+                      },
                     });
                   });
                   return;
                 }
                 speakWord(currentWord?.word || '', {
-                  speed: playbackSpeed === 0.2 ? 0.5 : 1.0,
+                  speed: playbackSpeed <= 0.2 ? 0.5 : 1.0,
                   lang: 'en-US',
-                  onEnd: () => stopPlayback(),
+                  onEnd: () => {
+                    if (videoError || !videoRef.current) stopPlayback();
+                  },
                 });
               }}
               className="hidden"
             />
 
-            {/* Single Audio Source HTML5 Video Element */}
-            <video
-              ref={videoRef}
-              src={currentWord.videoSrc}
-              className="absolute inset-0 w-full h-full object-cover opacity-0 pointer-events-none"
-              playsInline
-              onEnded={() => stopPlayback()}
-            />
-
-            {/* Visual Lip-Reading & Tongue Actor Illustration */}
-            <div className="relative w-44 h-24 sm:w-56 sm:h-32 flex items-center justify-center">
-              <svg viewBox="0 0 120 70" className="w-full h-full filter drop-shadow-md">
-                <ellipse cx="60" cy="35" rx="52" ry="28" fill="#0c0717" />
-                
-                {/* Upper Teeth */}
-                <rect
-                  x="36"
-                  y={activeLipShape === 'labiodental' ? '24' : '20'}
-                  width="48"
-                  height="12"
-                  rx="3"
-                  fill="#FFFFFF"
-                  stroke="#000000"
-                  strokeWidth="2"
-                />
-
-                {/* Tongue contour dynamic (#FD5A46) */}
-                <ellipse
-                  cx="60"
-                  cy={activeLipShape === 'alveolar' ? '30' : (activeLipShape === 'velar' ? '42' : '36')}
-                  rx={activeLipShape === 'bilabial' ? '0' : '22'}
-                  ry={activeLipShape === 'bilabial' ? '0' : '10'}
-                  fill="#FD5A46"
-                  stroke="#000000"
-                  strokeWidth="1.5"
-                  className={isPlaying ? 'animate-pulse' : ''}
-                />
-
-                {/* Lower Teeth */}
-                <rect
-                  x="38"
-                  y="38"
-                  width="44"
-                  height="10"
-                  rx="3"
-                  fill="#FFFFFF"
-                  stroke="#000000"
-                  strokeWidth="2"
-                />
-
-                {/* Dynamic Lips Ring Contour (#FB7DA8 with black outline) */}
-                <ellipse
-                  cx="60"
-                  cy="35"
-                  rx={activeLipShape === 'bilabial' ? '46' : (activeLipShape === 'labiodental' ? '42' : '48')}
-                  ry={activeLipShape === 'bilabial' ? '12' : (activeLipShape === 'labiodental' ? '18' : '24')}
-                  fill={activeLipShape === 'bilabial' ? '#FB7DA8' : 'none'}
-                  stroke="#FB7DA8"
-                  strokeWidth="7"
-                  className={isPlaying ? 'scale-105 transition-transform duration-200' : ''}
-                />
-              </svg>
-
-              {/* Center Play Overlay Icon on hover/pause */}
-              {!isPlaying && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/45 rounded-xl backdrop-blur-xs group-hover:bg-black/35 transition-all">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#FD5A46] text-white flex items-center justify-center border-2 border-black shadow-[3px_3px_0px_0px_#000000] group-hover:scale-110 transition-transform">
-                    <Play className="w-6 h-6 fill-white ml-0.5" />
-                  </div>
+            {/* Real HTML5 Video Player in Module 1 Viewport */}
+            {videoError ? (
+              <div className="flex flex-col items-center justify-center p-4 text-center z-10 select-none">
+                <div className="w-12 h-12 rounded-full bg-[#FFC567] border-2 border-black flex items-center justify-center mb-2 shadow-[2px_2px_0px_#000000]">
+                  <Eye className="w-6 h-6 text-black" />
                 </div>
-              )}
-            </div>
+                <span className="text-white font-black text-sm">Video Artikulasi: {currentWord.word}</span>
+                <span className="text-[#FFC567] text-xs font-semibold mt-1">Audio .m4a aktif & tersinkronisasi</span>
+              </div>
+            ) : (
+              <video
+                ref={videoRef}
+                src={getVideoPath(currentWord)}
+                playsInline
+                muted
+                preload="auto"
+                className="w-full h-full object-contain rounded-xl"
+                onTimeUpdate={handleVideoTimeUpdate}
+                onLoadedMetadata={() => {
+                  if (videoRef.current) {
+                    const dur = Math.ceil(videoRef.current.duration || 3);
+                    const formatTime = (s) => (s < 10 ? `0${s}` : `${s}`);
+                    setTimecode(`00:00 / 00:${formatTime(dur)}`);
+                  }
+                }}
+                onEnded={() => {
+                  setIsPlaying(false);
+                  if (audioRef.current) {
+                    try {
+                      audioRef.current.pause();
+                      audioRef.current.currentTime = 0;
+                    } catch (e) {}
+                  }
+                  if (waveIntervalRef.current) {
+                    clearInterval(waveIntervalRef.current);
+                    waveIntervalRef.current = null;
+                  }
+                }}
+                onError={(e) => {
+                  console.warn("Video failed to load:", e.target.src);
+                  if (e.target.src && e.target.src.includes('nametag.mp4')) {
+                    e.target.src = '/videos_vocab/name_tag.mp4';
+                    return;
+                  }
+                  setVideoError(true);
+                }}
+              />
+            )}
+
+            {/* Center Play Overlay Icon on hover/pause */}
+            {!isPlaying && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 rounded-xl backdrop-blur-xs group-hover:bg-black/30 transition-all pointer-events-none">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#FD5A46] text-white flex items-center justify-center border-2 border-black shadow-[3px_3px_0px_0px_#000000] group-hover:scale-110 transition-transform pointer-events-auto">
+                  <Play className="w-6 h-6 fill-white ml-0.5" />
+                </div>
+              </div>
+            )}
 
             {/* Top Bar inside Video: Timecode & Voiced Badge */}
-            <div className="absolute top-2 left-2.5 right-2.5 flex items-center justify-between text-xs text-white pointer-events-none">
+            <div className="absolute top-2 left-2.5 right-2.5 z-20 flex items-center justify-between text-xs text-white pointer-events-none">
               <span className="font-mono bg-black px-2 py-0.5 rounded-md border-1.5 border-[#FFC567] text-[#FFC567] font-black text-[11px] shadow-[2px_2px_0px_0px_#000000]">
                 {timecode}
               </span>
@@ -508,7 +544,7 @@ export default function BentoGrid({
             </div>
 
             {/* Bottom Bar: Dynamic Equalizer Waveform dancing across the bottom */}
-            <div className="absolute bottom-2 left-3 right-3 flex items-center justify-center gap-1 sm:gap-1.5 h-6 pointer-events-none">
+            <div className="absolute bottom-2 left-3 right-3 z-20 flex items-center justify-center gap-1 sm:gap-1.5 h-6 pointer-events-none">
               {[12, 22, 14, 28, 16, 24, 18, 28, 15, 24, 26, 14, 20, 24, 16, 22, 14, 26, 18, 24, 15, 28, 16, 20].map((baseHeight, i) => {
                 const colors = ['bg-[#058CD7]', 'bg-[#FFC567]', 'bg-[#FB7DA8]', 'bg-[#00995E]'];
                 const chosenColor = colors[i % 4];

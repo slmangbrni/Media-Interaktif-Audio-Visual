@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
@@ -6,6 +6,7 @@ import Instructions from './components/Instructions';
 import CategorySelect from './components/CategorySelect';
 import BentoGrid from './components/BentoGrid';
 import ParticleCursorTrail from './components/ParticleCursorTrail';
+import CustomCursor from './components/CustomCursor';
 import { VOCABULARY_DATA } from './data/vocabulary';
 import { stopAllSpeech } from './utils/audioEngine';
 
@@ -30,6 +31,8 @@ export default function App() {
     else if (screen === 'petunjuk') setCurrentScreen('instructions');
     else setCurrentScreen(screen);
   };
+
+  const setCurrentView = (view) => navigateTo(view);
 
   // Deterministic Linear Back Navigation:
   // Petunjuk -> Materi -> Beranda (Stops on Beranda where button disappears)
@@ -86,6 +89,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen overflow-y-auto w-full flex flex-col justify-between bg-gradient-to-br from-[#FFFDF8] via-[#FBF5ED] to-[#F5EEFF] text-black selection:bg-[#FFC567] selection:text-black relative isolate">
+      {/* 1:1 Zero-Lag Custom Cursor Layer */}
+      <CustomCursor />
+
       {/* Interactive Particle Cursor Trail Layer */}
       <ParticleCursorTrail />
 
@@ -107,11 +113,12 @@ export default function App() {
               initial="initial"
               animate="animate"
               exit="exit"
-              className="w-full flex-1 flex flex-col"
+              className="w-full flex-1 flex flex-col justify-center items-center my-auto min-h-[calc(100vh-13rem)] md:min-h-[calc(100vh-15rem)]"
             >
               <Dashboard
-                onStartLearning={() => navigateTo('categories')}
-                onSelectTreatment={handleSelectTreatment}
+                onStartLearning={() => navigateTo('materi')}
+                onGoToMateri={() => navigateTo('materi')}
+                setCurrentView={setCurrentView}
                 onGoToInstructions={() => navigateTo('instructions')}
               />
             </motion.div>

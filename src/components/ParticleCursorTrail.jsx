@@ -129,6 +129,7 @@ export default function ParticleCursorTrail() {
     };
 
     const handlePointerMove = (e) => {
+      if (!e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number') return;
       const currentX = e.clientX;
       const currentY = e.clientY;
 
@@ -164,10 +165,10 @@ export default function ParticleCursorTrail() {
       }
     };
 
-    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    window.addEventListener('mousemove', handlePointerMove, { passive: true });
 
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('mousemove', handlePointerMove);
       window.removeEventListener('resize', handleResize);
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
