@@ -296,76 +296,54 @@ export default function BentoGrid({
   const isLastWord = currentIndex >= wordsInTreatment.length - 1;
 
   return (
-    <div className="w-full max-w-7xl px-4 md:px-8 mx-auto flex-1 flex flex-col justify-between py-2 sm:py-2.5 overflow-y-auto lg:overflow-hidden select-none">
+    <div className="w-full max-w-7xl max-w-screen overflow-x-hidden mx-auto flex-1 flex flex-col justify-between py-1 sm:py-2 select-none">
       
-      {/* ─── TOP WORKSPACE CONTROLS & BREADCRUMB BAR ─── */}
-      <div className="flex items-center justify-between gap-2 pb-2 mb-1.5 border-b-2 border-black">
-        {/* Left: Navigation and Breadcrumb */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98, x: 3, y: 3, transition: { duration: 0.05 } }}
-            onClick={onBackToCategories}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000000] text-black font-black text-xs hover:bg-[#FFC567] transition-colors cursor-pointer"
-            aria-label="Kembali ke kategori artikulasi"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Kategori (Esc)</span>
-          </motion.button>
+      {/* ─── COMPACT ARCADE-STYLE HUD BAR (NO HORIZONTAL OVERFLOW) ─── */}
+      <div className="w-full max-w-full overflow-hidden flex items-center justify-between gap-1.5 sm:gap-2 pb-2 mb-2 border-b-2 border-black">
+        {/* Left: Back to Category button */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={onBackToCategories}
+          className="flex items-center gap-1 text-xs font-black px-2.5 py-1.5 bg-white border-2 border-black rounded-lg shadow-[2px_2px_0px_#000000] hover:bg-[#FFC567] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer shrink-0"
+          aria-label="Kembali ke kategori artikulasi"
+        >
+          <ChevronLeft className="w-4 h-4 stroke-[3]" />
+          <span className="hidden xs:inline sm:inline">Kategori</span>
+          <span className="hidden md:inline">(Esc)</span>
+        </motion.button>
 
-          <div className="flex items-center gap-1.5">
-            <span className="px-2.5 py-1 rounded-xl bg-[#552CB7] text-white border-2 border-black font-black text-xs tracking-wider uppercase shadow-[2px_2px_0px_0px_#000000]">
-              {currentWord.treatmentTitle}
-            </span>
-            <span className="px-2 py-1 rounded-lg bg-[#FFC567] text-black border-2 border-black font-black text-xs font-mono shadow-[2px_2px_0px_0px_#000000]">
-              {currentWord.code}
-            </span>
-          </div>
-        </div>
-
-        {/* Center: Stepper Progress Dots */}
-        <div className="hidden sm:flex items-center gap-2">
-          <span className="text-xs font-black text-black">
-            {currentIndex + 1}/{wordsInTreatment.length}
+        {/* Center: Active Category & Progress badge in deep violet */}
+        <div className="flex items-center gap-1 bg-[#4D28D4] text-white border-2 border-black px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-black shadow-[2px_2px_0px_#000000] truncate text-center shrink">
+          <span className="truncate uppercase tracking-wider">
+            {currentWord.shape || currentWord.treatment}
           </span>
-          <div className="flex items-center gap-1">
-            {wordsInTreatment.map((item, idx) => (
-              <button
-                key={item.code}
-                onClick={() => onSelectIndex(idx)}
-                className={`transition-all rounded-full cursor-pointer border-1.5 border-black ${
-                  idx === currentIndex
-                    ? 'w-5 h-2.5 bg-[#FD5A46]'
-                    : 'w-2.5 h-2.5 bg-white hover:bg-[#FFC567]'
-                }`}
-                title={`${item.code}: ${item.word}`}
-                aria-label={`Pilih kata ${item.word}`}
-              />
-            ))}
-          </div>
+          <span className="text-[#FFC567] mx-0.5">•</span>
+          <span className="font-mono text-[#FFC567] tracking-tight">
+            {String(currentIndex + 1).padStart(2, '0')}/{String(wordsInTreatment.length).padStart(2, '0')}
+          </span>
         </div>
 
-        {/* Right: Word Prev/Next Stepper Navigation */}
-        <div className="flex items-center gap-2">
-          {/* Stepper Buttons */}
+        {/* Right: Unified Prev (<) and Next (>) tactile game buttons */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <motion.button
             whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98, x: 2, y: 2, transition: { duration: 0.05 } }}
+            whileTap={{ scale: 0.95 }}
             disabled={currentIndex === 0}
             onClick={() => onSelectIndex(currentIndex - 1)}
-            className={`p-1.5 sm:p-2 rounded-xl border-2 border-black font-black cursor-pointer transition-all ${
+            className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border-2 border-black font-black text-xs transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none ${
               currentIndex === 0
-                ? 'opacity-40 bg-slate-100 cursor-not-allowed text-slate-400'
-                : 'bg-white text-black hover:bg-[#FFC567] shadow-[2px_2px_0px_0px_#000000]'
+                ? 'opacity-40 bg-zinc-200 cursor-not-allowed text-zinc-400'
+                : 'bg-white text-black hover:bg-[#FFC567] shadow-[2px_2px_0px_#000000] cursor-pointer'
             }`}
             aria-label="Kata sebelumnya"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4 stroke-[3]" />
           </motion.button>
 
           <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98, x: 3, y: 3, transition: { duration: 0.05 } }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => {
               if (isLastWord) {
                 onBackToCategories();
@@ -373,51 +351,60 @@ export default function BentoGrid({
                 onSelectIndex(currentIndex + 1);
               }
             }}
-            className="flex items-center gap-1 px-3 sm:px-4 py-1.5 rounded-xl bg-[#FD5A46] hover:bg-[#ff6e5b] text-white font-black text-xs sm:text-sm border-2 border-black shadow-[4px_4px_0px_0px_#000000] transition-colors cursor-pointer"
+            className={`flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border-2 border-black font-black text-xs transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer ${
+              isLastWord
+                ? 'bg-[#00995E] text-white shadow-[2px_2px_0px_#000000] hover:bg-[#00804e]'
+                : 'bg-[#FD5A46] text-white shadow-[2px_2px_0px_#000000] hover:bg-[#ff6e5b]'
+            }`}
+            aria-label={isLastWord ? 'Selesai materi' : 'Kata berikutnya'}
           >
             <span>{isLastWord ? 'Selesai' : 'Lanjut'}</span>
-            {isLastWord ? <CheckCircle className="w-4 h-4 text-[#FFC567]" /> : <ChevronRight className="w-4 h-4" />}
+            {isLastWord ? (
+              <CheckCircle className="w-3.5 h-3.5 text-[#FFC567]" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5 stroke-[3]" />
+            )}
           </motion.button>
         </div>
       </div>
 
       {/* ─── 2-COLUMN SIDE-BY-SIDE NEO-BRUTALISM STUDIO ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 my-auto items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 my-auto items-stretch w-full max-w-full">
         
         {/* ════════════════════════════════════════════════════════════════
             COLUMN 1: MODUL 1 (FRAME VIDEO ARTIKULASI & KONTROL) (Col Span 6)
             ════════════════════════════════════════════════════════════════ */}
         <motion.div
-          className="lg:col-span-6 flex flex-col justify-between bg-white rounded-2xl border-[2.5px] border-black shadow-[5px_5px_0px_0px_#000000] p-3 sm:p-4 relative"
+          className="lg:col-span-6 flex flex-col justify-between bg-white rounded-2xl border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000000] p-3 sm:p-4 relative"
         >
-          {/* Header Row */}
-          <div className="flex items-center justify-between mb-1.5">
+          {/* Header Row: Category Badge cleanly wraps without overlapping */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 mb-2">
             <div className="flex items-center gap-2">
-              <span className="p-1 rounded-lg bg-black text-[#FFC567]">
+              <span className="p-1 rounded-lg bg-black text-[#FFC567] shrink-0">
                 <Eye className="w-4 h-4" />
               </span>
               <div>
                 <h3 className="font-heading font-black text-xs sm:text-sm text-black leading-tight">
                   Modul 1: Frame Video Artikulasi
                 </h3>
-                <span className="text-[10px] font-bold text-black/75">
+                <span className="text-[10px] font-bold text-black/70">
                   Sinkronisasi Visual Lip-Reading & Equalizer
                 </span>
               </div>
             </div>
 
             {/* Vocal Hint Pill */}
-            <span className="px-2.5 py-0.5 rounded-full bg-[#FFC567] border-2 border-black text-black font-black text-[10px] flex items-center gap-1 shadow-[2px_2px_0px_0px_#000000]">
+            <span className="self-start sm:self-auto px-2.5 py-0.5 rounded-full bg-[#FFC567] border-2 border-black text-black font-black text-[10px] flex items-center gap-1 shadow-[2px_2px_0px_0px_#000000]">
               <Sparkles className="w-3 h-3 text-[#FD5A46]" />
               <span>{currentWord.shape.toUpperCase()} {currentWord.phoneme}</span>
             </span>
           </div>
 
-          {/* 16:9 Video Player Container (border-3 border-black + hard shadow) */}
+          {/* 4:3 Video Player Container (never letterboxed awkwardly) */}
           <motion.div
-            whileTap={{ scale: 0.99, x: 2, y: 2, transition: { duration: 0.05 } }}
+            whileTap={{ scale: 0.99 }}
             onClick={togglePlayPause}
-            className="w-full bg-[#181028] rounded-xl relative aspect-video flex flex-col items-center justify-center cursor-pointer select-none overflow-hidden group border-[3px] border-black shadow-[4px_4px_0px_0px_#000000]"
+            className="w-full bg-[#151226] rounded-xl relative aspect-[4/3] max-h-[260px] sm:max-h-[300px] flex flex-col items-center justify-center cursor-pointer select-none overflow-hidden group border-2 border-black shadow-[3px_3px_0px_0px_#000000]"
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
@@ -439,8 +426,6 @@ export default function BentoGrid({
                 if (videoError || !videoRef.current) {
                   stopPlayback();
                 }
-                // When video is playing, do NOT call setIsPlaying(false).
-                // Audio stays silent while the video smoothly finishes follow-through lip gestures.
               }}
               onError={(e) => {
                 console.warn(`[BentoGrid] Audio element error for ${currentWord?.word}:`, e);
@@ -539,7 +524,7 @@ export default function BentoGrid({
                   : 'bg-black/80 text-white'
               }`}>
                 <span className={`w-2 h-2 rounded-full ${currentWord.voiced ? (isPlaying ? 'bg-[#FFC567] animate-ping' : 'bg-[#FFC567]') : 'bg-slate-400'}`} />
-                <span>{currentWord.voiced ? 'Getaran Pita Suara' : 'Hening (Voiceless)'}</span>
+                <span>{currentWord.voiced ? 'Pita Suara Bergetar' : 'Hening (Voiceless)'}</span>
               </div>
             </div>
 
@@ -568,76 +553,76 @@ export default function BentoGrid({
           </motion.div>
 
           {/* Module 1 Controls: Play, Replay, and 1.0x / 0.2x Speed Toggles */}
-          <div className="flex flex-wrap items-center justify-between gap-2 mt-2 pt-2 border-t-2 border-black/15">
-            {/* Play & Replay buttons */}
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 mt-2 pt-2 border-t-2 border-black/15">
+            {/* Tactile Arcade Buttons: Putar & Ulangi */}
+            <div className="grid grid-cols-2 gap-2 w-full">
               <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98, x: 3, y: 3, transition: { duration: 0.05 } }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={togglePlayPause}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-black text-xs border-2 border-black cursor-pointer transition-colors ${
+                className={`min-h-[44px] py-2.5 px-4 rounded-xl font-black text-sm border-2 border-black cursor-pointer flex items-center justify-center gap-2 active:translate-y-0.5 active:shadow-none transition-all ${
                   isPlaying
-                    ? 'bg-[#FFC567] text-black shadow-[4px_4px_0px_0px_#000000]'
-                    : 'bg-[#FD5A46] text-white shadow-[4px_4px_0px_0px_#000000] hover:bg-[#ff6e5b]'
+                    ? 'bg-[#FFC567] text-black shadow-[3px_3px_0px_#000000]'
+                    : 'bg-[#FD5A46] text-white shadow-[3px_3px_0px_#000000] hover:bg-[#ff6e5b]'
                 }`}
                 aria-label={isPlaying ? 'Jeda video' : 'Putar video'}
               >
-                {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
                 <span>{isPlaying ? 'Jeda' : 'Putar'}</span>
               </motion.button>
 
               <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98, x: 3, y: 3, transition: { duration: 0.05 } }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => handlePlay({ fromStart: true })}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white text-black font-black text-xs border-2 border-black shadow-[3px_3px_0px_0px_#000000] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+                className="min-h-[44px] py-2.5 px-4 rounded-xl bg-white text-black font-black text-sm border-2 border-black shadow-[3px_3px_0px_#000000] hover:bg-[#FAF8F5] flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                 title="Putar ulang dari awal"
               >
-                <RotateCcw className="w-3 h-3" />
-                <span className="hidden sm:inline">Ulangi</span>
+                <RotateCcw className="w-4 h-4" />
+                <span>Ulangi</span>
               </motion.button>
             </div>
 
-            {/* Speed Toggles (Chunky pill buttons for 1.0x and 0.2x) */}
-            <div className="flex items-center gap-1 bg-[#FAF8F5] p-0.5 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000000]">
-              <span className="text-[10px] font-black text-black px-1 flex items-center gap-1">
-                <Gauge className="w-3 h-3 text-[#FD5A46]" />
-                <span className="hidden sm:inline">Tempo:</span>
+            {/* Tempo Toggle (Full-width underneath, minimum 44px touch target) */}
+            <div className="w-full flex items-center justify-between gap-1.5 bg-[#FAF8F5] p-1 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] min-h-[44px]">
+              <span className="text-xs font-black text-black px-2 flex items-center gap-1.5 shrink-0">
+                <Gauge className="w-4 h-4 text-[#FD5A46]" />
+                <span>Tempo:</span>
               </span>
 
-              {/* 0.2x Speed Toggle */}
-              <button
-                onClick={() => {
-                  setPlaybackSpeed(0.2);
-                  handlePlay({ speed: 0.2, fromStart: true });
-                }}
-                className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                  playbackSpeed === 0.2
-                    ? 'bg-[#FD5A46] text-white border-1.5 border-black shadow-[2px_2px_0px_0px_#000000]'
-                    : 'text-black hover:bg-[#FFC567]'
-                }`}
-                aria-pressed={playbackSpeed === 0.2}
-                title="Kecepatan lambat 0.2x"
-              >
-                0.2x (Lambat)
-              </button>
+              <div className="grid grid-cols-2 gap-1.5 flex-1">
+                <button
+                  onClick={() => {
+                    setPlaybackSpeed(0.2);
+                    handlePlay({ speed: 0.2, fromStart: true });
+                  }}
+                  className={`min-h-[36px] py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer text-center ${
+                    playbackSpeed === 0.2
+                      ? 'bg-[#FD5A46] text-white border-1.5 border-black shadow-[2px_2px_0px_#000000]'
+                      : 'text-black hover:bg-[#FFC567] bg-white border border-black/20'
+                  }`}
+                  aria-pressed={playbackSpeed === 0.2}
+                  title="Kecepatan lambat 0.2x"
+                >
+                  0.2x (Lambat)
+                </button>
 
-              {/* 1.0x Speed Toggle */}
-              <button
-                onClick={() => {
-                  setPlaybackSpeed(1.0);
-                  handlePlay({ speed: 1.0, fromStart: true });
-                }}
-                className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                  playbackSpeed === 1.0
-                    ? 'bg-[#058CD7] text-white border-1.5 border-black shadow-[2px_2px_0px_0px_#000000]'
-                    : 'text-black hover:bg-[#FFC567]'
-                }`}
-                aria-pressed={playbackSpeed === 1.0}
-                title="Kecepatan normal 1.0x"
-              >
-                1.0x (Normal)
-              </button>
+                <button
+                  onClick={() => {
+                    setPlaybackSpeed(1.0);
+                    handlePlay({ speed: 1.0, fromStart: true });
+                  }}
+                  className={`min-h-[36px] py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer text-center ${
+                    playbackSpeed === 1.0
+                      ? 'bg-[#058CD7] text-white border-1.5 border-black shadow-[2px_2px_0px_#000000]'
+                      : 'text-black hover:bg-[#FFC567] bg-white border border-black/20'
+                  }`}
+                  aria-pressed={playbackSpeed === 1.0}
+                  title="Kecepatan normal 1.0x"
+                >
+                  1.0x (Normal)
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -647,13 +632,13 @@ export default function BentoGrid({
             COLUMN 2: UNIFIED MODUL 2 (KOSAKATA, OBJEK & ANATOMI SAGITAL) (Col Span 6)
             ════════════════════════════════════════════════════════════════ */}
         <motion.div
-          className="lg:col-span-6 flex flex-col justify-between bg-white rounded-2xl border-[2.5px] border-black shadow-[5px_5px_0px_0px_#000000] p-3 sm:p-4 relative select-none"
+          className="lg:col-span-6 flex flex-col justify-between bg-white rounded-2xl border-[2.5px] border-black shadow-[4px_4px_0px_0px_#000000] p-3 sm:p-4 relative select-none"
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
             <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#552CB7] text-white border-2 border-black font-black text-xs shadow-[2px_2px_0px_0px_#000000]">
               <Headphones className="w-3.5 h-3.5 text-white" />
-              <span>Modul 2: Kosakata, Objek & Anatomi Sagital</span>
+              <span>Modul 2: Kosakata, Objek & Anatomi</span>
             </span>
 
             <span className="text-xs font-mono font-black text-black bg-[#FFC567] px-2.5 py-0.5 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_#000000]">
@@ -661,10 +646,10 @@ export default function BentoGrid({
             </span>
           </div>
 
-          {/* Top Section: Vocabulary & Real Object Showcase (Horizontal Split) */}
+          {/* Top Section: Interactive Flashcard Format (Object Image on Left + Word Info on Right) */}
           <div className="flex items-center gap-3 sm:gap-4 my-1">
             {/* Left: Real-world Object Image Frame */}
-            <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 bg-blue-50/60 rounded-xl border-2 border-black p-2 shadow-[3px_3px_0px_#000000] flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 bg-white rounded-xl border-2 border-black p-2 shadow-[2px_2px_0px_#000000] flex items-center justify-center shrink-0 overflow-hidden">
               <img
                 key={currentWord.code || currentWord.word}
                 src={currentWord.image}
@@ -689,44 +674,44 @@ export default function BentoGrid({
             {/* Right: Word, Translation, Phonetic, Badges */}
             <div className="flex flex-col justify-center flex-1 min-w-0">
               {/* English Word + Indonesian Translation Pill */}
-              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-heading font-black text-2xl sm:text-3xl md:text-4xl text-black tracking-tight leading-none truncate">
                   {currentWord.word}
                 </h2>
-                <span className="bg-[#FFC567] text-black font-black text-xs sm:text-sm md:text-base px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg border-2 border-black shadow-[2px_2px_0px_#000000] shrink-0">
+                <span className="bg-[#FFC567] text-black font-black text-xs sm:text-sm px-2.5 py-0.5 rounded-lg border-2 border-black shadow-[2px_2px_0px_#000000] shrink-0">
                   {currentWord.translation}
                 </span>
               </div>
 
               {/* Phonetic row: IPA Symbol + Pronunciation Guide Badge */}
-              <div className="flex items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2 flex-wrap">
-                <span className="font-mono-ipa font-black text-lg sm:text-xl text-black">
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className="font-mono-ipa font-black text-base sm:text-xl text-black">
                   {currentWord.ipa}
                 </span>
-                <span className="font-mono text-xs sm:text-sm font-black text-black bg-[#FAF8F5] border-1.5 border-black px-2 py-0.5 rounded shadow-[1.5px_1.5px_0px_0px_#000000]">
-                  Panduan: /{currentWord.guide}/
+                <span className="font-mono text-xs font-black text-black bg-[#FAF8F5] border-1.5 border-black px-2 py-0.5 rounded shadow-[1.5px_1.5px_0px_0px_#000000]">
+                  /{currentWord.guide}/
                 </span>
               </div>
 
-              {/* Phoneme & Vocal Cord Badges */}
-              <div className="flex items-center gap-1.5 sm:gap-2 mt-2 flex-wrap">
-                <span className="px-2 sm:px-2.5 py-0.5 rounded-lg bg-[#552CB7] text-white border-1.5 border-black font-mono-ipa font-black text-[11px] sm:text-xs shadow-[1.5px_1.5px_0px_0px_#000000]">
+              {/* Phoneme & Vocal Cord Game-Tag Badges */}
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                <span className="text-xs font-black py-1 px-2.5 rounded-md border-2 border-black bg-[#552CB7] text-white shadow-[1.5px_1.5px_0px_0px_#000000]">
                   Fonem: {currentWord.phoneme}
                 </span>
-                <span className={`px-2 sm:px-2.5 py-0.5 rounded-lg border-1.5 border-black font-black text-[11px] sm:text-xs shadow-[1.5px_1.5px_0px_0px_#000000] ${
+                <span className={`text-xs font-black py-1 px-2.5 rounded-md border-2 border-black shadow-[1.5px_1.5px_0px_0px_#000000] ${
                   currentWord.voiced ? 'bg-[#00995E] text-white' : 'bg-[#FB7DA8] text-black'
                 }`}>
-                  {currentWord.voiced ? 'Pita Suara Bergetar' : 'Pita Suara Tidak Bergetar'}
+                  {currentWord.voiced ? 'Pita Suara Bergetar' : 'Voiceless'}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Divider */}
-          <div className="border-t-2 border-black/15 my-2.5 sm:my-3" />
+          <div className="border-t-2 border-black/15 my-2 sm:my-3" />
 
           {/* Middle Section: Dynamic Sagittal Vocal Tract Diagram */}
-          <div className="w-full h-[170px] md:h-[195px] bg-[#FAF8F5] border-2 border-black rounded-xl p-2 flex items-center justify-center shadow-[2px_2px_0px_#000000] overflow-hidden">
+          <div className="h-[140px] md:h-[180px] w-full bg-white rounded-xl border-2 border-black p-2 flex items-center justify-center shadow-[2px_2px_0px_#000000] overflow-hidden">
             {currentWord.sagittalImage ? (
               <img
                 key={currentWord.sagittalImage}
@@ -749,8 +734,8 @@ export default function BentoGrid({
           </div>
 
           {/* Bottom Section: Full-width Yellow Articulation Mechanism Banner */}
-          <div className="w-full mt-2.5 sm:mt-3 p-3.5 bg-[#FFC567] border-2 border-black rounded-xl shadow-[3px_3px_0px_#000000]">
-            <p className="text-xs sm:text-sm font-bold text-black leading-relaxed">
+          <div className="w-full mt-2 sm:mt-3 p-3 bg-[#FFC567] border-2 border-black rounded-xl shadow-[2px_2px_0px_#000000]">
+            <p className="text-xs md:text-sm font-bold text-black leading-relaxed">
               {currentWord.articulatorDesc || currentWord.articulationDesc}
             </p>
           </div>

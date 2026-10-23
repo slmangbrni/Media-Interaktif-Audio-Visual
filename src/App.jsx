@@ -88,7 +88,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen overflow-y-auto w-full flex flex-col justify-between bg-gradient-to-br from-[#FFFDF8] via-[#FBF5ED] to-[#F5EEFF] text-black selection:bg-[#FFC567] selection:text-black relative isolate">
+    <div className="min-h-screen overflow-x-hidden overflow-y-auto w-full max-w-screen flex flex-col justify-between bg-gradient-to-br from-[#FFFDF8] via-[#FBF5ED] to-[#F5EEFF] text-black selection:bg-[#FFC567] selection:text-black relative isolate">
       {/* 1:1 Zero-Lag Custom Cursor Layer */}
       <CustomCursor />
 
@@ -104,7 +104,7 @@ export default function App() {
       />
 
       {/* Main Single-Canvas Viewport Container with fixed navbar spacer */}
-      <main className="flex-1 relative z-10 flex flex-col w-full pt-24 md:pt-28 pb-6 px-4 md:px-8">
+      <main className="flex-1 relative z-10 flex flex-col w-full max-w-screen overflow-x-hidden pt-20 sm:pt-24 md:pt-28 pb-4 md:pb-6 px-3 md:px-6">
         <AnimatePresence mode="wait">
           {currentScreen === 'dashboard' && (
             <motion.div
@@ -182,7 +182,7 @@ export default function App() {
       </main>
 
       {/* Clean Neo-Brutalist Bottom Bar */}
-      <footer className="shrink-0 bg-[#FAF8F5] border-t-2 border-black px-4 sm:px-6 md:px-8 py-2.5 md:py-3 z-20 select-none">
+      <footer className="shrink-0 bg-[#FAF8F5] border-t-2 border-black px-3 sm:px-6 md:px-8 py-2 md:py-3 z-20 select-none">
         <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-black truncate">
           <span className="w-3 h-3 bg-[#00995E] rounded-full border border-black inline-block shrink-0" />
           <span className="truncate">Media Interaktif Audio-Visual Pembelajaran Pelafalan Bahasa Inggris</span>
